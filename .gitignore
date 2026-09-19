@@ -1,0 +1,29 @@
+# --- Backend (Python) ---
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.pyc
+backend/.env
+backend/.coverage
+backend/.pytest_cache/
+backend/uploads/
+backend/tests/tmp_uploads/
+backend/tests/tmp_pdf_uploads/
+backend/server.log
+backend/gunicorn_test.log
+
+# --- Frontend (Node) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/dev.log
+frontend/npm-debug.log*
+
+# --- Editors / OS ---
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
