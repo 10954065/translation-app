@@ -27,21 +27,23 @@ def room_exists(code: str):
 
 @api_bp.get("/debug/translation-check")
 def translation_check():
-    """Temporary diagnostic: calls each provider directly and reports the raw
-    exception. Not wired into any client flow - safe to remove once the
-    production translation failure is root-caused."""
-    translation_service = current_app.extensions["translation_service"]
+    """Temporary diagnostic: calls each provider's raw client directly (no
+    retry/timeout wrapper) and reports the real exception. Not wired into any
+    client flow - safe to remove once the production translation failure is
+    root-caused."""
+    from deep_translator import GoogleTranslator, MyMemoryTranslator
+
     result = {}
 
     try:
-        text = translation_service._translate_with_google("hello", "en", "fr")
-        result["google"] = {"ok": text is not None, "text": text}
+        translated = GoogleTranslator(source="en", target="fr").translate("hello")
+        result["google"] = {"ok": True, "text": translated}
     except Exception as exc:  # noqa: BLE001 - diagnostic only
         result["google"] = {"ok": False, "error": repr(exc), "traceback": traceback.format_exc()}
 
     try:
-        text = translation_service._translate_with_mymemory("hello", "en", "fr")
-        result["mymemory"] = {"ok": text is not None, "text": text}
+        translated = MyMemoryTranslator(source="en-GB", target="fr-FR").translate("hello")
+        result["mymemory"] = {"ok": True, "text": translated}
     except Exception as exc:  # noqa: BLE001 - diagnostic only
         result["mymemory"] = {"ok": False, "error": repr(exc), "traceback": traceback.format_exc()}
 
