@@ -31,9 +31,20 @@ def translation_check():
     retry/timeout wrapper) and reports the real exception. Not wired into any
     client flow - safe to remove once the production translation failure is
     root-caused."""
-    from deep_translator import GoogleTranslator, MyMemoryTranslator
+    from deep_translator import DeeplTranslator, GoogleTranslator, MyMemoryTranslator
 
     result = {}
+    deepl_key = current_app.config.get("DEEPL_API_KEY", "")
+    result["deepl_key_configured"] = bool(deepl_key)
+
+    if deepl_key:
+        try:
+            translated = DeeplTranslator(source="en", target="fr", api_key=deepl_key).translate("hello")
+            result["deepl"] = {"ok": True, "text": translated}
+        except Exception as exc:  # noqa: BLE001 - diagnostic only
+            result["deepl"] = {"ok": False, "error": repr(exc), "traceback": traceback.format_exc()}
+    else:
+        result["deepl"] = {"ok": False, "error": "no key configured"}
 
     try:
         translated = GoogleTranslator(source="en", target="fr").translate("hello")
