@@ -19,8 +19,16 @@ import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 from dataclasses import dataclass
 
-from deep_translator import DeeplTranslator, GoogleTranslator, MyMemoryTranslator
+import requests
+from deep_translator import GoogleTranslator, MyMemoryTranslator
 from deep_translator.exceptions import LanguageNotSupportedException, NotValidPayload
+
+# deep-translator's DeeplTranslator authenticates via an `auth_key` query
+# parameter, a method DeepL's API has since retired in favor of an
+# `Authorization: DeepL-Auth-Key` header (confirmed live: the query-param
+# form returns 403 "Missing Authorization header"). DeepL is called
+# directly here instead of through deep-translator for this one provider.
+_DEEPL_FREE_URL = "https://api-free.deepl.com/v2/translate"
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +84,10 @@ _cache_order: list[tuple[str, str]] = []
 
 class TranslationError(Exception):
     """Raised when translation cannot be completed after retries."""
+
+
+class _DeeplPermanentError(Exception):
+    """Raised for DeepL responses that retrying will not fix (bad key, quota exceeded, unsupported language)."""
 
 
 @dataclass
@@ -202,12 +214,11 @@ class TranslationService:
         last_error: Exception | None = None
         for attempt in range(self.max_retries + 1):
             try:
-                translator = DeeplTranslator(source=source_locale, target=target_locale, api_key=self.deepl_api_key)
-                translated = self._run_with_timeout(translator.translate, text)
+                translated = self._run_with_timeout(self._call_deepl, text, source_locale, target_locale)
                 if translated:
                     return translated
                 last_error = TranslationError("Empty translation response")
-            except (LanguageNotSupportedException, NotValidPayload) as exc:
+            except _DeeplPermanentError as exc:
                 logger.error("DeepL translation rejected (%s -> %s): %s", source_language, target_language, exc)
                 return None
             except Exception as exc:  # noqa: BLE001 - external network dependency
@@ -223,6 +234,19 @@ class TranslationService:
                 time.sleep(0.2 * (attempt + 1))
         logger.warning("DeepL translation exhausted retries (%s -> %s): %s", source_language, target_language, last_error)
         return None
+
+    def _call_deepl(self, text: str, source_locale: str, target_locale: str) -> str:
+        response = requests.post(
+            _DEEPL_FREE_URL,
+            headers={"Authorization": f"DeepL-Auth-Key {self.deepl_api_key}"},
+            data={"text": text, "source_lang": source_locale.upper(), "target_lang": target_locale.upper()},
+            timeout=self.timeout_seconds,
+        )
+        if response.status_code in (400, 403, 456):
+            raise _DeeplPermanentError(f"HTTP {response.status_code}: {response.text}")
+        response.raise_for_status()
+        payload = response.json()
+        return payload["translations"][0]["text"]
 
     def _translate_with_google(self, text: str, source_language: str, target_language: str) -> str | None:
         last_error: Exception | None = None
