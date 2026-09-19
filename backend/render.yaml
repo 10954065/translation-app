@@ -15,7 +15,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        sync: false # set after the frontend is deployed, e.g. https://your-app.vercel.app
+        sync: false # set to https://polyglot-room.pages.dev in the Render dashboard
       - key: TRANSLATION_PROVIDER
         value: google
       - key: TRANSLATION_TIMEOUT_SECONDS
