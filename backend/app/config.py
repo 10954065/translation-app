@@ -18,6 +18,7 @@ class Config:
     TRANSLATION_PROVIDER = os.environ.get("TRANSLATION_PROVIDER", "google")
     TRANSLATION_TIMEOUT_SECONDS = float(os.environ.get("TRANSLATION_TIMEOUT_SECONDS", "6"))
     TRANSLATION_MAX_RETRIES = int(os.environ.get("TRANSLATION_MAX_RETRIES", "2"))
+    DEEPL_API_KEY = os.environ.get("DEEPL_API_KEY", "")
 
     MAX_PDF_SIZE_MB = int(os.environ.get("MAX_PDF_SIZE_MB", "10"))
     MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024

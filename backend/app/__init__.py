@@ -19,6 +19,7 @@ def create_app(config_class=Config):
     translation_service = TranslationService(
         timeout_seconds=app.config["TRANSLATION_TIMEOUT_SECONDS"],
         max_retries=app.config["TRANSLATION_MAX_RETRIES"],
+        deepl_api_key=app.config["DEEPL_API_KEY"],
     )
     room_service = RoomService(
         max_participants=app.config["MAX_PARTICIPANTS_PER_ROOM"],

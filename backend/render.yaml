@@ -22,6 +22,8 @@ services:
         value: "6"
       - key: TRANSLATION_MAX_RETRIES
         value: "2"
+      - key: DEEPL_API_KEY
+        sync: false # optional: set your DeepL free API key from deepl.com/pro-api
       - key: MAX_PDF_SIZE_MB
         value: "10"
       - key: PDF_UPLOAD_DIR
